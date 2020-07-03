@@ -1,7 +1,13 @@
 CREATE TABLE customerZipCodes(
     id INT NOT NULL IDENTITY(1,1) PRIMARY KEY,
-    id_customer int,
-    zip_code varchar(25)
+    cep varchar(25),
+    logradouro varchar(255),
+    complemento varchar(25),
+    bairro varchar(255),
+    uf varchar(2),
+    unidade varchar(255),
+    ibge varchar(255),
+    gia varchar(255)
 );
 
 
