@@ -31,7 +31,7 @@ public class Customer {
 
 	@Column(nullable = false)
 	@NotEmpty
-	@Email
+	@Email(message = "Email pattern should be valid")
 	private String email;
     
 	
