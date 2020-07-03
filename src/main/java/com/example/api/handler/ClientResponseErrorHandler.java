@@ -1,4 +1,4 @@
-package com.example.handler;
+package com.example.api.handler;
 
 import java.io.IOException;
 
@@ -8,7 +8,7 @@ import org.springframework.web.client.DefaultResponseErrorHandler;
 import org.springframework.web.client.ResponseErrorHandler;
 import org.springframework.web.server.ResponseStatusException;
 
-public class ErrorHandler extends DefaultResponseErrorHandler {
+public class ClientResponseErrorHandler extends DefaultResponseErrorHandler {
 	  @Override
 	  public void handleError(ClientHttpResponse response) throws IOException {
 		  throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cep invalid");

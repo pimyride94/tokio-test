@@ -1,6 +1,7 @@
 package com.example.api.web.rest;
 
 import java.util.List;
+import java.util.Map;
 
 import org.jboss.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -46,22 +48,23 @@ public class CustomerController {
 	@GetMapping("/{id}")
 	public Customer findById(@PathVariable Long id) {
 		return service.findById(id)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer not found"));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Customer with id="+id+" not found"));
 	}
 	
 	@PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<String> createCustomer(@RequestBody Customer customer) {
-		return service.saveCustomer(customer);
+	public ResponseEntity<Customer> createCustomer(@RequestBody Customer customer) {
+		return new ResponseEntity<Customer>(service.saveCustomer(customer), HttpStatus.OK);
 	}
 	
 	@PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<String> updateCustomer(@PathVariable Long id, @RequestBody Customer customer) {
-		return service.updateCustomer(id, customer);
+	public ResponseEntity<Customer> updateCustomer(@PathVariable Long id, @RequestBody Customer customer) {
+		return new ResponseEntity<Customer>(service.updateCustomer(id, customer), HttpStatus.OK);
 	}
 	
 	@DeleteMapping(value = "/{id}")
-	public ResponseEntity<String> deleteCustomer(@PathVariable Long id) {
-		return service.deleteCustomer(id);
+	public ResponseEntity<Void> deleteCustomer(@PathVariable Long id) {
+		service.deleteCustomer(id);
+		return new ResponseEntity<Void>(HttpStatus.NO_CONTENT);
 	}
 	
 }

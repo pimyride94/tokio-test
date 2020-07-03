@@ -11,11 +11,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import com.example.api.advice.exception.CustomExistsException;
+import com.example.api.advice.exception.CustomNotFoundException;
 import com.example.api.domain.Customer;
 import com.example.api.domain.ZipCode;
+import com.example.api.handler.ClientResponseErrorHandler;
 import com.example.api.repository.CustomerRepository;
 import com.example.api.repository.ZipCodeRepository;
-import com.example.handler.ErrorHandler;
 
 @Service
 public class CustomerService {
@@ -43,15 +45,15 @@ public class CustomerService {
 	}
 	
 	@Transactional
-	public ResponseEntity<String> saveCustomer(Customer customer) {
+	public Customer saveCustomer(Customer customer) {
 		if(customerExistsByEmail(customer))
-			return new ResponseEntity<>("Email already registered", HttpStatus.BAD_REQUEST);
+			throw new CustomExistsException("Email already registered");
 		
 		if(!customer.getZipCode().isEmpty())
 			validateAndCreateCustomerReferenceToZipCode(customer);
 
-		repository.save(customer);
-		return new ResponseEntity<>("Customer created with success", HttpStatus.CREATED);
+		customer = repository.save(customer);
+		return customer;
 	}
 	
 	@Transactional
@@ -60,27 +62,23 @@ public class CustomerService {
 	}
 	
 	@Transactional 
-	public ResponseEntity<String> updateCustomer(Long id, Customer customer) {
+	public Customer updateCustomer(Long id, Customer customer) {
 		boolean exists = repository.existsById(id);
 		
 		if(!exists)	
-			return new ResponseEntity<>("Customer with id "+id+" not found", HttpStatus.NOT_FOUND);
+			throw new CustomNotFoundException("Customer with id="+id+" not found");
 			
-		customer = updateCustomerFieldsAndReferences(id, customer);
-		repository.save(customer);
-		return new ResponseEntity<>("Customer with id "+id+" updated with success", HttpStatus.OK);
+		return repository.save(updateCustomerFieldsAndReferences(id, customer));
 	}
 	
 	@Transactional
-	public ResponseEntity<String> deleteCustomer(Long id) {
+	public void deleteCustomer(Long id) {
 		boolean exists = repository.existsById(id);
 		
 		if(!exists)
-			return new ResponseEntity<>("Customer with id "+id+" not found", HttpStatus.NOT_FOUND);
+			throw new CustomNotFoundException("Customer with id="+id+" not found");
 		
-		Customer customer = findById(id).get();
-		repository.delete(customer);
-		return new ResponseEntity<>("Customer with id "+id+" deleted with success", HttpStatus.OK);
+		repository.delete(findById(id).get());
 	}
 	
 	private boolean customerExistsByEmail(Customer customer) {
@@ -90,7 +88,7 @@ public class CustomerService {
 	
 	private void populateZipCodeDataFromViaCepWebService(ZipCode zipCode) {
 		RestTemplate restTemplate = new RestTemplate();
-		restTemplate.setErrorHandler(new ErrorHandler());
+		restTemplate.setErrorHandler(new ClientResponseErrorHandler());
 		ZipCode response = restTemplate.getForObject("https://viacep.com.br/ws/"+zipCode.getCep()+"/json/", ZipCode.class);
 		BeanUtils.copyProperties(response, zipCode);
 	}
@@ -101,7 +99,6 @@ public class CustomerService {
 			item.setZipCustomer(customer);
 		}
 	}
-	
 	
 	private Customer updateCustomerFieldsAndReferences(Long id, Customer customer) {
 		Customer updatedCustomer = findById(id).get();
